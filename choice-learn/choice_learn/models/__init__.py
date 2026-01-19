@@ -5,6 +5,7 @@ import logging
 import tensorflow as tf
 
 from .conditional_logit import ConditionalLogit
+from .deephalo_featureless import DeepHaloFeatureless
 from .learning_mnl import LearningMNL
 from .nested_logit import NestedLogit
 from .reslogit import ResLogit
@@ -21,6 +22,7 @@ else:
 
 __all__ = [
     "ConditionalLogit",
+    "DeepHaloFeatureless",
     "RUMnet",
     "SimpleMNL",
     "TasteNet",
