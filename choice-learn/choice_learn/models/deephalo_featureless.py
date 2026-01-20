@@ -1,6 +1,6 @@
 """DeepHalo Featureless Model
 
-This module implements a featureless deep neural network model for discrete choice prediction.
+This module implements a featureless ResNet-like deep neural network model for discrete choice prediction.
 The model uses residual blocks (Quadratic or Exact) to learn complex choice patterns (including halo effects)
 from availability masks only, without requiring item features.
 
@@ -122,8 +122,8 @@ class DeepHaloFeatureless(ChoiceModel):
         Batch size for stochastic optimizers, by default 1024
     loss_type : str, optional
         Loss function type. Options:
-        - 'nll' or 'cross_entropy': Negative Log-Likelihood (default, recommended)
-        - 'mse': Mean Squared Error (experimental, for comparison)
+        - 'nll' or 'cross_entropy': Negative Log-Likelihood
+        - 'mse': Mean Squared Error
         By default 'mse'
     **kwargs
         Additional arguments passed to ChoiceModel base class
@@ -256,7 +256,7 @@ class DeepHaloFeatureless(ChoiceModel):
         if not self.instantiated:
             # Set opt_size from data
             self.opt_size = n_items
-            
+            print(f"DeepHaloFeatureless instantiated with opt_size={self.opt_size} inferred from data.")
             # Initialize layers and build model
             self._initialize_layers()
             self._build_model()
