@@ -32,18 +32,18 @@ def test_deephalo_instantiation_qua():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
         loss_type='nll'
     )
     
-    assert model.opt_size == 3
+    assert model.n_items == 3
     assert model.depth == 3
-    assert model.resnet_width == 16
+    assert model.hidden_dim == 16
     assert len(model.blocks) == 2
     assert len(model.trainable_weights) > 0
     assert model.instantiated == True
@@ -54,16 +54,16 @@ def test_deephalo_instantiation_exa():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['exa', 'exa'],
         optimizer='Adam',
         lr=0.0001,
         loss_type='nll'
     )
     
-    assert model.opt_size == 3
+    assert model.n_items == 3
     assert model.depth == 3
     assert len(model.blocks) == 2
     assert len(model.trainable_weights) > 0
@@ -74,9 +74,9 @@ def test_deephalo_instantiation_mixed():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=4,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -91,9 +91,9 @@ def test_deephalo_invalid_block_type():
     """Tests that invalid block type raises error."""
     with pytest.raises(ValueError, match="Unknown block type"):
         DeepHaloFeatureless(
-            opt_size=3,
+            n_items=3,
             depth=3,
-            resnet_width=16,
+            hidden_dim=16,
             block_types=['invalid', 'qua'],
             optimizer='Adam',
             lr=0.0001
@@ -104,9 +104,9 @@ def test_deephalo_invalid_depth():
     """Tests that mismatched depth and block_types raises error."""
     with pytest.raises(ValueError, match="Length of block_types"):
         DeepHaloFeatureless(
-            opt_size=3,
+            n_items=3,
             depth=5,
-            resnet_width=16,
+            hidden_dim=16,
             block_types=['qua', 'qua'],  # Should have 4 blocks for depth=5
             optimizer='Adam',
             lr=0.0001
@@ -117,9 +117,9 @@ def test_deephalo_invalid_loss_type():
     """Tests that invalid loss type raises error."""
     with pytest.raises(ValueError, match="Unknown loss_type"):
         DeepHaloFeatureless(
-            opt_size=3,
+            n_items=3,
             depth=3,
-            resnet_width=16,
+            hidden_dim=16,
             block_types=['qua', 'qua'],
             optimizer='Adam',
             lr=0.0001,
@@ -132,9 +132,9 @@ def test_deephalo_loss_type_nll():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -150,9 +150,9 @@ def test_deephalo_loss_type_mse():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -168,9 +168,9 @@ def test_forward_pass():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -195,9 +195,9 @@ def test_compute_batch_utility():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -223,9 +223,9 @@ def test_trainable_weights():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=5,
+        n_items=5,
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -246,9 +246,9 @@ def test_fit_with_nll():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -271,9 +271,9 @@ def test_fit_with_mse():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -296,9 +296,9 @@ def test_predict_probas():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -324,9 +324,9 @@ def test_evaluate():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -349,9 +349,9 @@ def test_different_optimizers():
     
     for optimizer in ['Adam', 'SGD', 'RMSprop']:
         model = DeepHaloFeatureless(
-            opt_size=3,
+            n_items=3,
             depth=3,
-            resnet_width=16,
+            hidden_dim=16,
             block_types=['qua', 'qua'],
             optimizer=optimizer,
             lr=0.0001,
@@ -368,9 +368,9 @@ def test_batch_size_handling():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -387,9 +387,9 @@ def test_items_features_shape_2d():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=3,
+        n_items=3,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -410,13 +410,13 @@ def test_items_features_shape_2d():
 
 
 def test_lazy_instantiation():
-    """Tests that model can be instantiated without opt_size."""
+    """Tests that model can be instantiated without n_items."""
     tf.config.run_functions_eagerly(True)
     
-    # Create model without opt_size
+    # Create model without n_items
     model = DeepHaloFeatureless(
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -424,14 +424,14 @@ def test_lazy_instantiation():
         loss_type='nll'
     )
     
-    assert model.opt_size is None
+    assert model.n_items is None
     assert model.instantiated == False
     assert not hasattr(model, 'in_lin')  # Layers not created yet
     
     # Fit should trigger instantiation
     model.fit(test_dataset)
     
-    assert model.opt_size == 3  # Inferred from dataset
+    assert model.n_items == 3  # Inferred from dataset
     assert model.instantiated == True
     assert hasattr(model, 'in_lin')
     assert len(model.trainable_weights) > 0
@@ -443,7 +443,7 @@ def test_instantiate_method():
     
     model = DeepHaloFeatureless(
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001
@@ -452,10 +452,10 @@ def test_instantiate_method():
     assert model.instantiated == False
     
     # Call instantiate manually
-    indexes, weights = model.instantiate(n_items=5, n_shared_features=0, n_items_features=1)
+    indexes, weights = model.instantiate(n_items=5)
     
     assert model.instantiated == True
-    assert model.opt_size == 5
+    assert model.n_items == 5
     assert indexes == {}  # Featureless model returns empty dict
     assert len(weights) > 0
     assert len(weights) == len(model.trainable_weights)
@@ -467,9 +467,9 @@ def test_default_block_types():
     
     # Create model with only depth, block_types should default to all 'qua'
     model = DeepHaloFeatureless(
-        opt_size=4,
+        n_items=4,
         depth=5,
-        resnet_width=16,
+        hidden_dim=16,
         optimizer='Adam',
         lr=0.0001
     )
@@ -479,23 +479,23 @@ def test_default_block_types():
     assert model.instantiated == True
 
 
-def test_instantiate_idempotent():
+def test_instantiate_repeatable():
     """Tests that calling instantiate() multiple times doesn't re-initialize."""
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         optimizer='Adam',
         lr=0.0001
     )
     
     # First instantiation
-    model.instantiate(n_items=3, n_shared_features=0, n_items_features=1)
+    model.instantiate(n_items=3)
     weights_before = [w.numpy().copy() for w in model.trainable_weights]
     
     # Second instantiation should not re-initialize
-    model.instantiate(n_items=3, n_shared_features=0, n_items_features=1)
+    model.instantiate(n_items=3)
     weights_after = [w.numpy() for w in model.trainable_weights]
     
     # Weights should be the same

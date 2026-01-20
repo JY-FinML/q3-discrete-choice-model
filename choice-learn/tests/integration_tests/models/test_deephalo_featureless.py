@@ -47,9 +47,9 @@ def test_deephalo_run():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=3,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -71,9 +71,9 @@ def test_deephalo_fit_nll():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -97,9 +97,9 @@ def test_deephalo_fit_mse():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -138,9 +138,9 @@ def test_deephalo_convergence():
     )
     
     model = DeepHaloFeatureless(
-        opt_size=5,
+        n_items=5,
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.01,
@@ -166,9 +166,9 @@ def test_deephalo_predict_accuracy():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -217,9 +217,9 @@ def test_deephalo_with_validation():
     )
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=3,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -241,9 +241,9 @@ def test_deephalo_save_load():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=3,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -282,9 +282,9 @@ def test_deephalo_batch_prediction_consistency():
     tf.config.run_functions_eagerly(True)
     
     model = DeepHaloFeatureless(
-        opt_size=n_items,
+        n_items=n_items,
         depth=3,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -319,9 +319,9 @@ def test_deephalo_different_architectures():
     
     for arch in architectures:
         model = DeepHaloFeatureless(
-            opt_size=n_items,
+            n_items=n_items,
             depth=arch['depth'],
-            resnet_width=16,
+            hidden_dim=16,
             block_types=arch['block_types'],
             optimizer='Adam',
             lr=0.0001,
@@ -342,13 +342,13 @@ def test_deephalo_different_architectures():
 # ============================================================================
 
 def test_deephalo_lazy_instantiation():
-    """Tests that model works without opt_size using lazy instantiation."""
+    """Tests that model works without n_items using lazy instantiation."""
     tf.config.run_functions_eagerly(True)
     
-    # Create model without opt_size
+    # Create model without n_items
     model = DeepHaloFeatureless(
         depth=4,
-        resnet_width=32,
+        hidden_dim=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
         lr=0.0001,
@@ -357,13 +357,13 @@ def test_deephalo_lazy_instantiation():
         loss_type='nll'
     )
     
-    assert model.opt_size is None
+    assert model.n_items is None
     assert model.instantiated == False
     
     # Fit should trigger instantiation
     history = model.fit(integration_dataset)
     
-    assert model.opt_size == n_items  # Inferred from dataset
+    assert model.n_items == n_items  # Inferred from dataset
     assert model.instantiated == True
     
     # Model should work normally after instantiation
@@ -382,7 +382,7 @@ def test_deephalo_lazy_with_default_blocks():
     # Create model with minimal parameters
     model = DeepHaloFeatureless(
         depth=3,
-        resnet_width=32,
+        hidden_dim=32,
         optimizer='Adam',
         lr=0.0001,
         epochs=10,
@@ -390,14 +390,14 @@ def test_deephalo_lazy_with_default_blocks():
         loss_type='nll'
     )
     
-    assert model.opt_size is None
+    assert model.n_items is None
     assert model.block_types == ['qua', 'qua']  # Default for depth=3
     assert model.instantiated == False
     
     # Fit should work
     history = model.fit(integration_dataset)
     
-    assert model.opt_size == n_items
+    assert model.n_items == n_items
     assert model.instantiated == True
     assert len(model.blocks) == 2
     assert 'train_loss' in history
@@ -418,10 +418,10 @@ def test_deephalo_lazy_instantiation_convergence():
         choices=simple_choices,
     )
     
-    # Create model without opt_size
+    # Create model without n_items
     model = DeepHaloFeatureless(
         depth=3,
-        resnet_width=16,
+        hidden_dim=16,
         optimizer='Adam',
         lr=0.01,
         epochs=50,
@@ -434,6 +434,6 @@ def test_deephalo_lazy_instantiation_convergence():
     # After training, model should predict item 0 with high probability
     probas = model.predict_probas(simple_dataset)
     
-    assert model.opt_size == 5
+    assert model.n_items == 5
     assert np.mean(probas[:, 0]) > 0.3
     assert history['train_loss'][-1] < history['train_loss'][0]

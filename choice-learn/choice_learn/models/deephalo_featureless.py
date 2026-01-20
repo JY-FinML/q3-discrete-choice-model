@@ -8,9 +8,9 @@ Note: This module uses 'batch_size' terminology for consistency with variable na
 though it is equivalent to 'n_choices' used in ChoiceModel base class comments. Both refer to
 the number of choice samples (decisions) in a batch.
 
-Unlike models that require instantiate() for flexibility, this model supports both approaches:
-1. Explicit initialization: Provide opt_size at __init__ to build the network immediately
-2. Lazy initialization: Omit opt_size and let instantiate() infer it from data during fit()
+The model supports:
+1. Explicit initialization: Provide n_items at __init__ to build the network immediately
+2. Lazy initialization: Omit n_items and let instantiate() infer it from data during fit()
 
 """
 
@@ -102,12 +102,12 @@ class DeepHaloFeatureless(ChoiceModel):
     
     Parameters
     ----------
-    opt_size : int, optional
+    n_items : int, optional
         Size of the choice set (number of items). If not provided, will be
         inferred from data during fit() via instantiate() method.
     depth : int, optional
         Number of residual blocks + 1, by default 5
-    resnet_width : int, optional
+    hidden_dim : int, optional
         Hidden dimension of the residual network, by default 64
     block_types : list of str, optional
         List of block types, each must be 'qua' (quadratic) or 'exa' (exact).
@@ -139,11 +139,11 @@ class DeepHaloFeatureless(ChoiceModel):
         
     Example
     -------
-    >>> # With explicit opt_size
+    >>> # With explicit n_items
     >>> model = DeepHaloFeatureless(
-    ...     opt_size=20,
+    ...     n_items=20,
     ...     depth=5,
-    ...     resnet_width=64,
+    ...     hidden_dim=64,
     ...     block_types=['qua'] * 4,
     ...     optimizer='Adam',
     ...     lr=0.0001,
@@ -151,20 +151,20 @@ class DeepHaloFeatureless(ChoiceModel):
     ... )
     >>> model.fit(dataset)
     >>>
-    >>> # Without opt_size (inferred from data)
+    >>> # Without n_items (inferred from data)
     >>> model = DeepHaloFeatureless(
     ...     depth=5,
-    ...     resnet_width=64,
+    ...     hidden_dim=64,
     ...     optimizer='Adam'
     ... )
-    >>> model.fit(dataset)  # opt_size will be inferred from dataset
+    >>> model.fit(dataset)  # n_items will be inferred from dataset
     """
     
     def __init__(
         self,
-        opt_size=None,
+        n_items=None,
         depth=5,
-        resnet_width=64,
+        hidden_dim=64,
         block_types=None,
         optimizer="Adam",
         lr=0.0001,
@@ -177,12 +177,12 @@ class DeepHaloFeatureless(ChoiceModel):
         
         Parameters
         ----------
-        opt_size : int, optional
+        n_items : int, optional
             Size of the choice set (number of items). If not provided, will be
             inferred from data during instantiate() call.
         depth : int, optional
             Number of residual blocks + 1, by default 5
-        resnet_width : int, optional
+        hidden_dim : int, optional
             Hidden dimension of the residual network, by default 64
         block_types : list of str, optional
             List of block types, each must be 'qua' (quadratic) or 'exa' (exact).
@@ -213,9 +213,9 @@ class DeepHaloFeatureless(ChoiceModel):
                 f"Length of block_types ({len(block_types)}) must equal depth - 1 ({depth - 1})"
             )
         
-        self.opt_size = opt_size
+        self.n_items = n_items
         self.depth = depth
-        self.resnet_width = resnet_width
+        self.hidden_dim = hidden_dim
         self.block_types = block_types
         self.instantiated = False
         
@@ -230,23 +230,19 @@ class DeepHaloFeatureless(ChoiceModel):
             raise ValueError(f"Unknown loss_type: {loss_type}. "
                            f"Choose from 'nll', 'cross_entropy', or 'mse'.")
         
-        # Build the model if opt_size is provided
-        if opt_size is not None:
+        # Build the model if n_items is provided
+        if n_items is not None:
             self._initialize_layers()
             self._build_model()
             self.instantiated = True
     
-    def instantiate(self, n_items, n_shared_features, n_items_features):
+    def instantiate(self, n_items):
         """Instantiate the model from data dimensions.
         
         Parameters
         ----------
         n_items : int
             Number of items/alternatives in the choice set
-        n_shared_features : int
-            Number of shared features (not used by this model)
-        n_items_features : int
-            Number of items features (not used by this model)
             
         Returns
         -------
@@ -254,9 +250,9 @@ class DeepHaloFeatureless(ChoiceModel):
             (indexes, weights) where indexes is empty dict and weights is list of trainable weights
         """
         if not self.instantiated:
-            # Set opt_size from data
-            self.opt_size = n_items
-            print(f"DeepHaloFeatureless instantiated with opt_size={self.opt_size} inferred from data.")
+            # Set n_items from data
+            self.n_items = n_items
+            print(f"DeepHaloFeatureless instantiated with n_items={self.n_items} inferred from data.")
             # Initialize layers and build model
             self._initialize_layers()
             self._build_model()
@@ -282,33 +278,29 @@ class DeepHaloFeatureless(ChoiceModel):
             Dictionary with fit history
         """
         if not self.instantiated:
-            # Lazy instantiation - infer opt_size from data
-            self.instantiate(
-                n_items=choice_dataset.get_n_items(),
-                n_shared_features=choice_dataset.get_n_shared_features(),
-                n_items_features=choice_dataset.get_n_items_features(),
-            )
+            # Lazy instantiation - infer n_items from data
+            self.instantiate(choice_dataset.get_n_items())
         return super().fit(choice_dataset=choice_dataset, **kwargs)
     
     def _initialize_layers(self):
         """Initialize all layers of the model."""
         # Initialize layers
-        self.in_lin = tf.keras.layers.Dense(self.resnet_width, use_bias=False)
-        self.out_lin = tf.keras.layers.Dense(self.opt_size, use_bias=False)
+        self.in_lin = tf.keras.layers.Dense(self.hidden_dim, use_bias=False)
+        self.out_lin = tf.keras.layers.Dense(self.n_items, use_bias=False)
         self.blocks = []
         
         for t in self.block_types:
             if t == "exa":
-                self.blocks.append(ExaResBlock(self.opt_size, self.resnet_width))
+                self.blocks.append(ExaResBlock(self.n_items, self.hidden_dim))
             elif t == "qua":
-                self.blocks.append(QuaResBlock(self.resnet_width))
+                self.blocks.append(QuaResBlock(self.hidden_dim))
             else:
                 raise ValueError(f"Unknown block type: {t}. Must be 'exa' or 'qua'")
     
     def _build_model(self):
         """Build the model by doing a forward pass to initialize all weights."""
         # Create dummy input to initialize layers
-        dummy_input = tf.zeros((1, self.opt_size))
+        dummy_input = tf.zeros((1, self.n_items))
         _ = self._forward(dummy_input)
     
     def _forward(self, e):
@@ -317,12 +309,12 @@ class DeepHaloFeatureless(ChoiceModel):
         Parameters
         ----------
         e : tf.Tensor
-            Availability mask of shape (batch_size, opt_size)
+            Availability mask of shape (batch_size, n_items)
             
         Returns
         -------
         tuple of (tf.Tensor, tf.Tensor)
-            (probabilities, logits) both of shape (batch_size, opt_size)
+            (probabilities, logits) both of shape (batch_size, n_items)
         """
         mask = tf.equal(e, 1.0)
         e0 = tf.identity(e)
@@ -431,7 +423,7 @@ class DeepHaloFeatureless(ChoiceModel):
         super().save_model(path, save_opt=save_opt)
         
         # The base class save_model already saves most attributes through params.json
-        # No additional saving needed as opt_size, depth, resnet_width, block_types, loss_type
+        # No additional saving needed as n_items, depth, hidden_dim, block_types, loss_type
         # are already captured in the params.json by the base class
     
     @classmethod
@@ -454,9 +446,9 @@ class DeepHaloFeatureless(ChoiceModel):
         
         # Extract required initialization parameters
         obj = cls(
-            opt_size=params['opt_size'],
+            n_items=params.get('n_items'),  
             depth=params['depth'],
-            resnet_width=params['resnet_width'],
+            hidden_dim=params.get('hidden_dim'),  
             block_types=params['block_types'],
             optimizer=params['optimizer_name'],
             lr=params.get('lr', 0.001),
@@ -499,7 +491,7 @@ class DeepHaloFeatureless(ChoiceModel):
         
         # Set other attributes from params
         for k, v in params.items():
-            if k not in ['opt_size', 'depth', 'resnet_width', 'block_types', 
+            if k not in ['n_items', 'depth', 'hidden_dim', 'block_types', 
                          'optimizer_name', 'lr', 'epochs', 'batch_size', 'loss_type']:
                 setattr(obj, k, v)
         
