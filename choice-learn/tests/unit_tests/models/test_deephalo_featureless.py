@@ -37,7 +37,7 @@ def test_deephalo_instantiation_qua():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -58,7 +58,7 @@ def test_deephalo_instantiation_exa():
         resnet_width=16,
         block_types=['exa', 'exa'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -78,7 +78,7 @@ def test_deephalo_instantiation_mixed():
         resnet_width=16,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -95,7 +95,7 @@ def test_deephalo_invalid_block_type():
             resnet_width=16,
             block_types=['invalid', 'qua'],
             optimizer='Adam',
-            lr=0.001
+            lr=0.0001
         )
 
 
@@ -108,7 +108,7 @@ def test_deephalo_invalid_depth():
             resnet_width=16,
             block_types=['qua', 'qua'],  # Should have 4 blocks for depth=5
             optimizer='Adam',
-            lr=0.001
+            lr=0.0001
         )
 
 
@@ -121,7 +121,7 @@ def test_deephalo_invalid_loss_type():
             resnet_width=16,
             block_types=['qua', 'qua'],
             optimizer='Adam',
-            lr=0.001,
+            lr=0.0001,
             loss_type='invalid_loss'
         )
 
@@ -136,7 +136,7 @@ def test_deephalo_loss_type_nll():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -154,7 +154,7 @@ def test_deephalo_loss_type_mse():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='mse'
     )
     
@@ -172,7 +172,7 @@ def test_forward_pass():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     # Test with simple availability mask
@@ -199,7 +199,7 @@ def test_compute_batch_utility():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     utilities = model.compute_batch_utility(
@@ -227,7 +227,7 @@ def test_trainable_weights():
         resnet_width=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     weights = model.trainable_weights
@@ -250,7 +250,7 @@ def test_fit_with_nll():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.01,
+        lr=0.0001,
         epochs=5,
         batch_size=2,
         loss_type='nll'
@@ -275,7 +275,7 @@ def test_fit_with_mse():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.01,
+        lr=0.0001,
         epochs=5,
         batch_size=2,
         loss_type='mse'
@@ -300,7 +300,7 @@ def test_predict_probas():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     probas = model.predict_probas(test_dataset)
@@ -328,7 +328,7 @@ def test_evaluate():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -353,7 +353,7 @@ def test_different_optimizers():
             resnet_width=16,
             block_types=['qua', 'qua'],
             optimizer=optimizer,
-            lr=0.001,
+            lr=0.0001,
             epochs=2,
             batch_size=2
         )
@@ -372,7 +372,7 @@ def test_batch_size_handling():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     # Test with different batch sizes
@@ -391,7 +391,7 @@ def test_items_features_shape_2d():
         resnet_width=16,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001
+        lr=0.0001
     )
     
     # Test with 2D availability (batch_size, n_items)

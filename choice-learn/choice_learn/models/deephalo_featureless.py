@@ -140,7 +140,7 @@ class DeepHaloFeatureless(ChoiceModel):
     ...     resnet_width=64,
     ...     block_types=['qua'] * 4,
     ...     optimizer='Adam',
-    ...     lr=0.001,
+    ...     lr=0.0001,
     ...     loss_type='mse'
     ... )
     >>> model.fit(dataset)
@@ -153,7 +153,7 @@ class DeepHaloFeatureless(ChoiceModel):
         resnet_width,
         block_types,
         optimizer="Adam",
-        lr=0.001,
+        lr=0.0001,
         epochs=500,
         batch_size=1024,
         loss_type="mse",

@@ -52,7 +52,7 @@ def test_deephalo_run():
         resnet_width=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=5,
         batch_size=32,
         loss_type='nll'
@@ -76,7 +76,7 @@ def test_deephalo_fit_nll():
         resnet_width=32,
         block_types=['qua', 'qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=20,
         batch_size=32,
         loss_type='nll'
@@ -102,7 +102,7 @@ def test_deephalo_fit_mse():
         resnet_width=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=20,
         batch_size=32,
         loss_type='mse'
@@ -171,7 +171,7 @@ def test_deephalo_predict_accuracy():
         resnet_width=32,
         block_types=['qua', 'exa', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=20,
         batch_size=32,
         loss_type='nll'
@@ -222,7 +222,7 @@ def test_deephalo_with_validation():
         resnet_width=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=5,
         batch_size=32,
         loss_type='nll'
@@ -246,7 +246,7 @@ def test_deephalo_save_load():
         resnet_width=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         epochs=5,
         batch_size=32,
         loss_type='nll'
@@ -287,7 +287,7 @@ def test_deephalo_batch_prediction_consistency():
         resnet_width=32,
         block_types=['qua', 'qua'],
         optimizer='Adam',
-        lr=0.001,
+        lr=0.0001,
         loss_type='nll'
     )
     
@@ -324,7 +324,7 @@ def test_deephalo_different_architectures():
             resnet_width=16,
             block_types=arch['block_types'],
             optimizer='Adam',
-            lr=0.001,
+            lr=0.0001,
             epochs=5,
             batch_size=32,
             loss_type='nll'
