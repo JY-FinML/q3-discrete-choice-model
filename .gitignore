@@ -3,4 +3,4 @@
 *.pyo
 *.pyd
 *.csv
-**/docs/
+docs/

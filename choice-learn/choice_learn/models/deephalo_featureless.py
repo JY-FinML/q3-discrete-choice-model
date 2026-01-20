@@ -1,10 +1,18 @@
-"""DeepHalo Featureless Model for Choice Prediction.
+"""DeepHalo Featureless Model
 
 This module implements a featureless deep neural network model for discrete choice prediction.
-The model uses residual blocks (Quadratic and Exponential) to learn complex choice patterns
+The model uses residual blocks (Quadratic or Exact) to learn complex choice patterns (including halo effects)
 from availability masks only, without requiring item features.
+
+Note: This module uses 'batch_size' terminology for consistency with variable naming conventions,
+though it is equivalent to 'n_choices' used in ChoiceModel base class comments. Both refer to
+the number of choice samples (decisions) in a batch.
 """
 
+import json
+from pathlib import Path
+
+import numpy as np
 import tensorflow as tf
 
 from .base_model import ChoiceModel
@@ -44,7 +52,7 @@ class QuaResBlock(tf.keras.layers.Layer):
 
 
 class ExaResBlock(tf.keras.layers.Layer):
-    """Exponential-like Residual Block.
+    """Exact Residual Block.
     
     Applies element-wise multiplication with learned activations.
     """
@@ -74,7 +82,7 @@ class ExaResBlock(tf.keras.layers.Layer):
         Returns
         -------
         tf.Tensor
-            Output after exponential-like residual transformation
+            Output after exact residual transformation
         """
         z_prev, z0 = inputs
         return self.linear_main(z_prev * self.linear_act(z0)) + z_prev
@@ -96,7 +104,7 @@ class DeepHaloFeatureless(ChoiceModel):
     resnet_width : int
         Hidden dimension of the residual network
     block_types : list of str
-        List of block types, each must be 'qua' (quadratic) or 'exa' (exponential).
+        List of block types, each must be 'qua' (quadratic) or 'exa' (exact).
         Length must be depth - 1.
     optimizer : str, optional
         Optimizer to use ('lbfgs', 'Adam', 'SGD', etc.), by default 'Adam'
@@ -110,7 +118,7 @@ class DeepHaloFeatureless(ChoiceModel):
         Loss function type. Options:
         - 'nll' or 'cross_entropy': Negative Log-Likelihood (default, recommended)
         - 'mse': Mean Squared Error (experimental, for comparison)
-        By default 'nll'
+        By default 'mse'
     **kwargs
         Additional arguments passed to ChoiceModel base class
         
@@ -125,23 +133,12 @@ class DeepHaloFeatureless(ChoiceModel):
         
     Example
     -------
-    >>> # Using NLL (recommended)
-    >>> model = DeepHaloFeatureless(
-    ...     opt_size=20,
-    ...     depth=5,
-    ...     resnet_width=64,
-    ...     block_types=['qua', 'qua', 'qua', 'qua'],
-    ...     optimizer='Adam',
-    ...     lr=0.001,
-    ...     loss_type='nll'
-    ... )
-    >>> 
     >>> # Using MSE (experimental)
     >>> model_mse = DeepHaloFeatureless(
     ...     opt_size=20,
     ...     depth=5,
     ...     resnet_width=64,
-    ...     block_types=['qua', 'qua', 'qua', 'qua'],
+    ...     block_types=['qua'] * 4,
     ...     optimizer='Adam',
     ...     lr=0.001,
     ...     loss_type='mse'
@@ -157,9 +154,9 @@ class DeepHaloFeatureless(ChoiceModel):
         block_types,
         optimizer="Adam",
         lr=0.001,
-        epochs=1000,
-        batch_size=32,
-        loss_type="nll",
+        epochs=500,
+        batch_size=1024,
+        loss_type="mse",
         **kwargs
     ):
         """Initialize DeepHalo Featureless model.
@@ -168,8 +165,8 @@ class DeepHaloFeatureless(ChoiceModel):
         ----------
         loss_type : str, optional
             Type of loss function to use. Options:
-            - 'nll' or 'cross_entropy': Negative Log-Likelihood (default, recommended)
-            - 'mse': Mean Squared Error (for experimental comparison)
+            - 'mse': Mean Squared Error (default)
+            - 'nll' or 'cross_entropy': Negative Log-Likelihood (alternative)
         """
         # Store loss_type before calling parent init
         self.loss_type = loss_type.lower()
@@ -196,8 +193,7 @@ class DeepHaloFeatureless(ChoiceModel):
         # Set custom loss function if MSE is selected (after parent init)
         if self.loss_type in ['mse', 'mean_squared_error']:
             self.loss = tf.keras.losses.MeanSquaredError()
-            print("⚠️  Warning: Using MSE loss for discrete choice model. "
-                  "NLL/Cross-Entropy is recommended for better performance.")
+            print("Using MSE loss for DeepHalo featureless discrete choice model. ")
         elif self.loss_type in ['nll', 'cross_entropy', 'categorical_crossentropy']:
             # Use default NLL from base class (already set by parent __init__)
             pass
@@ -333,3 +329,103 @@ class DeepHaloFeatureless(ChoiceModel):
         _, logits = self._forward(availability)
         
         return logits
+    
+    def save_model(self, path, save_opt=True):
+        """Save the model to disk.
+        
+        Parameters
+        ----------
+        path : str
+            Path to the folder where to save the model
+        save_opt : bool, optional
+            Whether to save optimizer state, by default True
+        """
+        super().save_model(path, save_opt=save_opt)
+        
+        # The base class save_model already saves most attributes through params.json
+        # No additional saving needed as opt_size, depth, resnet_width, block_types, loss_type
+        # are already captured in the params.json by the base class
+    
+    @classmethod
+    def load_model(cls, path):
+        """Load a DeepHaloFeatureless model previously saved with save_model().
+        
+        Parameters
+        ----------
+        path : str
+            Path to the folder where the saved model files are
+            
+        Returns
+        -------
+        DeepHaloFeatureless
+            Loaded DeepHaloFeatureless model
+        """
+        # Load parameters from params.json
+        with open(Path(path) / "params.json") as f:
+            params = json.load(f)
+        
+        # Extract required initialization parameters
+        obj = cls(
+            opt_size=params['opt_size'],
+            depth=params['depth'],
+            resnet_width=params['resnet_width'],
+            block_types=params['block_types'],
+            optimizer=params['optimizer_name'],
+            lr=params.get('lr', 0.001),
+            epochs=params.get('epochs', 1000),
+            batch_size=params.get('batch_size', 32),
+            loss_type=params.get('loss_type', 'mse'),
+        )
+        
+        # Load weights from files
+        loaded_weights = []
+        i = 0
+        weight_path = f"weight_{i}.npy"
+        files_list = [str(file.name) for file in Path(path).iterdir()]
+        
+        while weight_path in files_list:
+            loaded_weights.append(np.load(Path(path) / weight_path))
+            i += 1
+            weight_path = f"weight_{i}.npy"
+        
+        # Assign loaded weights to the model's layers
+        # IMPORTANT: Order must match trainable_weights property:
+        # in_lin weights, then out_lin weights, then blocks weights
+        weight_idx = 0
+        
+        # Assign to in_lin
+        for var in obj.in_lin.trainable_variables:
+            var.assign(loaded_weights[weight_idx])
+            weight_idx += 1
+        
+        # Assign to out_lin
+        for var in obj.out_lin.trainable_variables:
+            var.assign(loaded_weights[weight_idx])
+            weight_idx += 1
+        
+        # Assign to blocks
+        for block in obj.blocks:
+            for var in block.trainable_variables:
+                var.assign(loaded_weights[weight_idx])
+                weight_idx += 1
+        
+        # Set other attributes from params
+        for k, v in params.items():
+            if k not in ['opt_size', 'depth', 'resnet_width', 'block_types', 
+                         'optimizer_name', 'lr', 'epochs', 'batch_size', 'loss_type']:
+                setattr(obj, k, v)
+        
+        # Load optimizer state if available
+        if Path.is_dir(Path(path) / "optimizer"):
+            with open(Path(path) / "optimizer" / "config.json") as f:
+                config = json.load(f)
+            obj.optimizer = obj.optimizer.from_config(config)
+            obj.optimizer.build(var_list=obj.trainable_weights)
+            
+            with open(Path(path) / "optimizer" / "weights_store.json") as f:
+                store = json.load(f)
+            for key, value in store.items():
+                store[key] = np.array(value, dtype=np.float32)
+            obj.optimizer.load_own_variables(store)
+        
+        return obj
