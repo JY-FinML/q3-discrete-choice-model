@@ -46,6 +46,7 @@ def test_deephalo_instantiation_qua():
     assert model.resnet_width == 16
     assert len(model.blocks) == 2
     assert len(model.trainable_weights) > 0
+    assert model.instantiated == True
 
 
 def test_deephalo_instantiation_exa():
@@ -406,3 +407,97 @@ def test_items_features_shape_2d():
     )
     
     assert utilities.shape == (2, 3)
+
+
+def test_lazy_instantiation():
+    """Tests that model can be instantiated without opt_size."""
+    tf.config.run_functions_eagerly(True)
+    
+    # Create model without opt_size
+    model = DeepHaloFeatureless(
+        depth=3,
+        resnet_width=16,
+        block_types=['qua', 'qua'],
+        optimizer='Adam',
+        lr=0.0001,
+        epochs=2,
+        loss_type='nll'
+    )
+    
+    assert model.opt_size is None
+    assert model.instantiated == False
+    assert not hasattr(model, 'in_lin')  # Layers not created yet
+    
+    # Fit should trigger instantiation
+    model.fit(test_dataset)
+    
+    assert model.opt_size == 3  # Inferred from dataset
+    assert model.instantiated == True
+    assert hasattr(model, 'in_lin')
+    assert len(model.trainable_weights) > 0
+
+
+def test_instantiate_method():
+    """Tests the instantiate() method directly."""
+    tf.config.run_functions_eagerly(True)
+    
+    model = DeepHaloFeatureless(
+        depth=4,
+        resnet_width=32,
+        block_types=['qua', 'exa', 'qua'],
+        optimizer='Adam',
+        lr=0.0001
+    )
+    
+    assert model.instantiated == False
+    
+    # Call instantiate manually
+    indexes, weights = model.instantiate(n_items=5, n_shared_features=0, n_items_features=1)
+    
+    assert model.instantiated == True
+    assert model.opt_size == 5
+    assert indexes == {}  # Featureless model returns empty dict
+    assert len(weights) > 0
+    assert len(weights) == len(model.trainable_weights)
+
+
+def test_default_block_types():
+    """Tests that default block_types are created when not specified."""
+    tf.config.run_functions_eagerly(True)
+    
+    # Create model with only depth, block_types should default to all 'qua'
+    model = DeepHaloFeatureless(
+        opt_size=4,
+        depth=5,
+        resnet_width=16,
+        optimizer='Adam',
+        lr=0.0001
+    )
+    
+    assert model.block_types == ['qua', 'qua', 'qua', 'qua']
+    assert len(model.blocks) == 4
+    assert model.instantiated == True
+
+
+def test_instantiate_idempotent():
+    """Tests that calling instantiate() multiple times doesn't re-initialize."""
+    tf.config.run_functions_eagerly(True)
+    
+    model = DeepHaloFeatureless(
+        depth=3,
+        resnet_width=16,
+        optimizer='Adam',
+        lr=0.0001
+    )
+    
+    # First instantiation
+    model.instantiate(n_items=3, n_shared_features=0, n_items_features=1)
+    weights_before = [w.numpy().copy() for w in model.trainable_weights]
+    
+    # Second instantiation should not re-initialize
+    model.instantiate(n_items=3, n_shared_features=0, n_items_features=1)
+    weights_after = [w.numpy() for w in model.trainable_weights]
+    
+    # Weights should be the same
+    for w_before, w_after in zip(weights_before, weights_after):
+        assert np.allclose(w_before, w_after)

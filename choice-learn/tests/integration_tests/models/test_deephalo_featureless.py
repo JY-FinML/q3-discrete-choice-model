@@ -335,3 +335,105 @@ def test_deephalo_different_architectures():
         
         assert 'train_loss' in history
         assert loss > 0.0
+
+
+# ============================================================================
+# LAZY INSTANTIATION TESTS
+# ============================================================================
+
+def test_deephalo_lazy_instantiation():
+    """Tests that model works without opt_size using lazy instantiation."""
+    tf.config.run_functions_eagerly(True)
+    
+    # Create model without opt_size
+    model = DeepHaloFeatureless(
+        depth=4,
+        resnet_width=32,
+        block_types=['qua', 'exa', 'qua'],
+        optimizer='Adam',
+        lr=0.0001,
+        epochs=10,
+        batch_size=32,
+        loss_type='nll'
+    )
+    
+    assert model.opt_size is None
+    assert model.instantiated == False
+    
+    # Fit should trigger instantiation
+    history = model.fit(integration_dataset)
+    
+    assert model.opt_size == n_items  # Inferred from dataset
+    assert model.instantiated == True
+    
+    # Model should work normally after instantiation
+    nll = model.evaluate(integration_dataset)
+    probas = model.predict_probas(integration_dataset)
+    
+    assert nll > 0.0
+    assert probas.shape == (n_samples, n_items)
+    assert 'train_loss' in history
+
+
+def test_deephalo_lazy_with_default_blocks():
+    """Tests lazy instantiation with default block types."""
+    tf.config.run_functions_eagerly(True)
+    
+    # Create model with minimal parameters
+    model = DeepHaloFeatureless(
+        depth=3,
+        resnet_width=32,
+        optimizer='Adam',
+        lr=0.0001,
+        epochs=10,
+        batch_size=32,
+        loss_type='nll'
+    )
+    
+    assert model.opt_size is None
+    assert model.block_types == ['qua', 'qua']  # Default for depth=3
+    assert model.instantiated == False
+    
+    # Fit should work
+    history = model.fit(integration_dataset)
+    
+    assert model.opt_size == n_items
+    assert model.instantiated == True
+    assert len(model.blocks) == 2
+    assert 'train_loss' in history
+
+
+def test_deephalo_lazy_instantiation_convergence():
+    """Tests that lazily instantiated model can still converge."""
+    tf.config.run_functions_eagerly(True)
+    
+    # Create simple dataset where first item is always chosen
+    simple_availability = np.ones((50, 5), dtype='float32')
+    simple_choices = np.zeros(50, dtype=int)
+    simple_items_features = simple_availability[:, :, np.newaxis]
+    
+    simple_dataset = ChoiceDataset(
+        items_features_by_choice=simple_items_features,
+        available_items_by_choice=simple_availability,
+        choices=simple_choices,
+    )
+    
+    # Create model without opt_size
+    model = DeepHaloFeatureless(
+        depth=3,
+        resnet_width=16,
+        optimizer='Adam',
+        lr=0.01,
+        epochs=50,
+        batch_size=10,
+        loss_type='nll'
+    )
+    
+    history = model.fit(simple_dataset)
+    
+    # After training, model should predict item 0 with high probability
+    probas = model.predict_probas(simple_dataset)
+    
+    assert model.opt_size == 5
+    assert np.mean(probas[:, 0]) > 0.3
+    assert history['train_loss'][-1] < history['train_loss'][0]

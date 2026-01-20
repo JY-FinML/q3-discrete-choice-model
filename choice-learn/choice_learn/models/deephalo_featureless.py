@@ -7,6 +7,11 @@ from availability masks only, without requiring item features.
 Note: This module uses 'batch_size' terminology for consistency with variable naming conventions,
 though it is equivalent to 'n_choices' used in ChoiceModel base class comments. Both refer to
 the number of choice samples (decisions) in a batch.
+
+Unlike models that require instantiate() for flexibility, this model supports both approaches:
+1. Explicit initialization: Provide opt_size at __init__ to build the network immediately
+2. Lazy initialization: Omit opt_size and let instantiate() infer it from data during fit()
+
 """
 
 import json
@@ -97,23 +102,24 @@ class DeepHaloFeatureless(ChoiceModel):
     
     Parameters
     ----------
-    opt_size : int
-        Size of the choice set (number of items)
-    depth : int
-        Number of residual blocks + 1
-    resnet_width : int
-        Hidden dimension of the residual network
-    block_types : list of str
+    opt_size : int, optional
+        Size of the choice set (number of items). If not provided, will be
+        inferred from data during fit() via instantiate() method.
+    depth : int, optional
+        Number of residual blocks + 1, by default 5
+    resnet_width : int, optional
+        Hidden dimension of the residual network, by default 64
+    block_types : list of str, optional
         List of block types, each must be 'qua' (quadratic) or 'exa' (exact).
-        Length must be depth - 1.
+        Length must be depth - 1. If not provided, defaults to all 'qua'.
     optimizer : str, optional
         Optimizer to use ('lbfgs', 'Adam', 'SGD', etc.), by default 'Adam'
     lr : float, optional
-        Learning rate for optimizer, by default 0.001
+        Learning rate for optimizer, by default 0.0001
     epochs : int, optional
-        Maximum number of training epochs, by default 1000
+        Maximum number of training epochs, by default 500
     batch_size : int, optional
-        Batch size for stochastic optimizers, by default 32
+        Batch size for stochastic optimizers, by default 1024
     loss_type : str, optional
         Loss function type. Options:
         - 'nll' or 'cross_entropy': Negative Log-Likelihood (default, recommended)
@@ -133,8 +139,8 @@ class DeepHaloFeatureless(ChoiceModel):
         
     Example
     -------
-    >>> # Using MSE (experimental)
-    >>> model_mse = DeepHaloFeatureless(
+    >>> # With explicit opt_size
+    >>> model = DeepHaloFeatureless(
     ...     opt_size=20,
     ...     depth=5,
     ...     resnet_width=64,
@@ -144,14 +150,22 @@ class DeepHaloFeatureless(ChoiceModel):
     ...     loss_type='mse'
     ... )
     >>> model.fit(dataset)
+    >>>
+    >>> # Without opt_size (inferred from data)
+    >>> model = DeepHaloFeatureless(
+    ...     depth=5,
+    ...     resnet_width=64,
+    ...     optimizer='Adam'
+    ... )
+    >>> model.fit(dataset)  # opt_size will be inferred from dataset
     """
     
     def __init__(
         self,
-        opt_size,
-        depth,
-        resnet_width,
-        block_types,
+        opt_size=None,
+        depth=5,
+        resnet_width=64,
+        block_types=None,
         optimizer="Adam",
         lr=0.0001,
         epochs=500,
@@ -163,6 +177,16 @@ class DeepHaloFeatureless(ChoiceModel):
         
         Parameters
         ----------
+        opt_size : int, optional
+            Size of the choice set (number of items). If not provided, will be
+            inferred from data during instantiate() call.
+        depth : int, optional
+            Number of residual blocks + 1, by default 5
+        resnet_width : int, optional
+            Hidden dimension of the residual network, by default 64
+        block_types : list of str, optional
+            List of block types, each must be 'qua' (quadratic) or 'exa' (exact).
+            Length must be depth - 1. If not provided, defaults to all 'qua'.
         loss_type : str, optional
             Type of loss function to use. Options:
             - 'mse': Mean Squared Error (default)
@@ -180,6 +204,10 @@ class DeepHaloFeatureless(ChoiceModel):
             **kwargs
         )
         
+        # Set default block_types if not provided
+        if block_types is None:
+            block_types = ['qua'] * (depth - 1)
+        
         if len(block_types) != depth - 1:
             raise ValueError(
                 f"Length of block_types ({len(block_types)}) must equal depth - 1 ({depth - 1})"
@@ -189,6 +217,7 @@ class DeepHaloFeatureless(ChoiceModel):
         self.depth = depth
         self.resnet_width = resnet_width
         self.block_types = block_types
+        self.instantiated = False
         
         # Set custom loss function if MSE is selected (after parent init)
         if self.loss_type in ['mse', 'mean_squared_error']:
@@ -201,21 +230,80 @@ class DeepHaloFeatureless(ChoiceModel):
             raise ValueError(f"Unknown loss_type: {loss_type}. "
                            f"Choose from 'nll', 'cross_entropy', or 'mse'.")
         
+        # Build the model if opt_size is provided
+        if opt_size is not None:
+            self._initialize_layers()
+            self._build_model()
+            self.instantiated = True
+    
+    def instantiate(self, n_items, n_shared_features, n_items_features):
+        """Instantiate the model from data dimensions.
+        
+        Parameters
+        ----------
+        n_items : int
+            Number of items/alternatives in the choice set
+        n_shared_features : int
+            Number of shared features (not used by this model)
+        n_items_features : int
+            Number of items features (not used by this model)
+            
+        Returns
+        -------
+        tuple of (dict, list)
+            (indexes, weights) where indexes is empty dict and weights is list of trainable weights
+        """
+        if not self.instantiated:
+            # Set opt_size from data
+            self.opt_size = n_items
+            
+            # Initialize layers and build model
+            self._initialize_layers()
+            self._build_model()
+            
+            self.instantiated = True
+        
+        # Return empty indexes dict and trainable weights for compatibility
+        return {}, self.trainable_weights
+    
+    def fit(self, choice_dataset, **kwargs):
+        """Fit the model to estimate parameters.
+        
+        Parameters
+        ----------
+        choice_dataset : ChoiceDataset
+            Choice dataset to use for training
+        **kwargs
+            Additional arguments passed to parent fit method
+            
+        Returns
+        -------
+        dict
+            Dictionary with fit history
+        """
+        if not self.instantiated:
+            # Lazy instantiation - infer opt_size from data
+            self.instantiate(
+                n_items=choice_dataset.get_n_items(),
+                n_shared_features=choice_dataset.get_n_shared_features(),
+                n_items_features=choice_dataset.get_n_items_features(),
+            )
+        return super().fit(choice_dataset=choice_dataset, **kwargs)
+    
+    def _initialize_layers(self):
+        """Initialize all layers of the model."""
         # Initialize layers
-        self.in_lin = tf.keras.layers.Dense(resnet_width, use_bias=False)
-        self.out_lin = tf.keras.layers.Dense(opt_size, use_bias=False)
+        self.in_lin = tf.keras.layers.Dense(self.resnet_width, use_bias=False)
+        self.out_lin = tf.keras.layers.Dense(self.opt_size, use_bias=False)
         self.blocks = []
         
-        for t in block_types:
+        for t in self.block_types:
             if t == "exa":
-                self.blocks.append(ExaResBlock(opt_size, resnet_width))
+                self.blocks.append(ExaResBlock(self.opt_size, self.resnet_width))
             elif t == "qua":
-                self.blocks.append(QuaResBlock(resnet_width))
+                self.blocks.append(QuaResBlock(self.resnet_width))
             else:
                 raise ValueError(f"Unknown block type: {t}. Must be 'exa' or 'qua'")
-        
-        # Build the model to initialize weights
-        self._build_model()
     
     def _build_model(self):
         """Build the model by doing a forward pass to initialize all weights."""
