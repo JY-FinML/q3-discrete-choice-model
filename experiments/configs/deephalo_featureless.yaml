@@ -1,0 +1,48 @@
+data:
+  train_path: "data/Synthetic_20-15-80_Train.csv"
+  test_path: "data/Synthetic_20-15-20_Test.csv"
+  n_items: 20
+  n_features: 1  # Only availability mask
+  validation_split: 0.0  # If > 0, split from training data
+
+model:
+  name: DeepHaloFeatureless
+  n_items: 20
+  block_types: 'qua'
+
+training:
+  optimizer: "Adam"
+  epochs: 500
+  batch_size: 1024
+  lr: 0.0001
+  loss_type: 'mse'
+
+output:
+  result_dir: "experiments/results/deephalo_featureless"
+  save_model: true
+  save_plots: true
+  
+parameters:
+  param_200k:
+    - depth: 3
+      hidden_dim: 306
+    - depth: 4
+      hidden_dim: 251
+    - depth: 5
+      hidden_dim: 218
+    - depth: 6
+      hidden_dim: 195
+    - depth: 7
+      hidden_dim: 179
+  param_500k:
+    - depth: 3
+      hidden_dim: 489
+    - depth: 4
+      hidden_dim: 401
+    - depth: 5
+      hidden_dim: 348
+    - depth: 6
+      hidden_dim: 312
+    - depth: 7
+      hidden_dim: 285
+

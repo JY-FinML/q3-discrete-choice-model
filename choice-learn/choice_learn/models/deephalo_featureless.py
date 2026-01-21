@@ -29,7 +29,7 @@ class QuaResBlock(tf.keras.layers.Layer):
     Applies a quadratic transformation: linear(x^2) + x
     """
     
-    def __init__(self, d, **kwargs):
+    def __init__(self, hidden_dim, **kwargs):
         """Initialize QuaResBlock.
         
         Parameters
@@ -38,14 +38,14 @@ class QuaResBlock(tf.keras.layers.Layer):
             Dimension of the block
         """
         super().__init__(**kwargs)
-        self.linear = tf.keras.layers.Dense(d, use_bias=False)
+        self.linear = tf.keras.layers.Dense(hidden_dim, use_bias=False)
     
-    def call(self, x):
+    def call(self, inputs):
         """Forward pass.
         
         Parameters
         ----------
-        x : tf.Tensor
+        inputs : tf.Tensor
             Input tensor
             
         Returns
@@ -53,7 +53,7 @@ class QuaResBlock(tf.keras.layers.Layer):
         tf.Tensor
             Output after quadratic residual transformation
         """
-        return self.linear(tf.math.pow(x, 2)) + x
+        return self.linear(tf.math.pow(inputs, 2)) + inputs
 
 
 class ExaResBlock(tf.keras.layers.Layer):
@@ -62,13 +62,11 @@ class ExaResBlock(tf.keras.layers.Layer):
     Applies element-wise multiplication with learned activations.
     """
     
-    def __init__(self, input_dim, hidden_dim, **kwargs):
+    def __init__(self, hidden_dim, **kwargs):
         """Initialize ExaResBlock.
         
         Parameters
         ----------
-        input_dim : int
-            Input dimension (original availability vector size)
         hidden_dim : int
             Hidden dimension for transformations
         """
@@ -224,7 +222,7 @@ class DeepHaloFeatureless(ChoiceModel):
             self.loss = tf.keras.losses.MeanSquaredError()
             print("Using MSE loss for DeepHalo featureless discrete choice model. ")
         elif self.loss_type in ['nll', 'cross_entropy', 'categorical_crossentropy']:
-            # Use default NLL from base class (already set by parent __init__)
+            # Use NLL from base class (already set by parent __init__)
             pass
         else:
             raise ValueError(f"Unknown loss_type: {loss_type}. "
@@ -291,14 +289,22 @@ class DeepHaloFeatureless(ChoiceModel):
         
         for t in self.block_types:
             if t == "exa":
-                self.blocks.append(ExaResBlock(self.n_items, self.hidden_dim))
+                self.blocks.append(ExaResBlock(self.hidden_dim))
             elif t == "qua":
                 self.blocks.append(QuaResBlock(self.hidden_dim))
             else:
                 raise ValueError(f"Unknown block type: {t}. Must be 'exa' or 'qua'")
     
     def _build_model(self):
-        """Build the model by doing a forward pass to initialize all weights."""
+        """Build the model by doing a forward pass to initialize all weights.
+        
+        This is necessary because TensorFlow uses lazy weight initialization:
+        - When layers are created (e.g., tf.keras.layers.Dense), their weights don't exist yet
+        - Weights are only created on the first forward pass when input shape is known
+        - Without this, trainable_weights property would return an empty list
+        - The dummy forward pass triggers weight creation for all layers (in_lin, blocks, out_lin)
+        - After this call, all weights are initialized and ready for training
+        """
         # Create dummy input to initialize layers
         dummy_input = tf.zeros((1, self.n_items))
         _ = self._forward(dummy_input)

@@ -4,3 +4,4 @@
 *.pyd
 *.csv
 docs/
+**/.pytest_cache/
