@@ -7,6 +7,7 @@ summary plots.
 """
 
 import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1" # Restrict TensorFlow to see only GPU 0 and 1 (all operations will run on these GPUs)
 import sys
 import json
 import yaml
@@ -30,7 +31,7 @@ np.random.seed(RANDOM_SEED)
 tf.random.set_seed(RANDOM_SEED)
 
 
-def train_model_config(model_config, train_config, data, verbose=1):
+def train_model_config(model_config, train_config, data, verbose=0):
     """
     Train a single model configuration.
     

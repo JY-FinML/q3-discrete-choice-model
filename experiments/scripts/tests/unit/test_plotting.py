@@ -71,8 +71,8 @@ class TestPlottingFunctions:
         
         # Check that plots were created
         expected_files = [
-            'rmse_vs_epoch_all.png',
-            'final_rmse_vs_depth.png'
+            'rmse_vs_epoch_all.pdf',
+            'final_rmse_vs_depth.pdf'
         ]
         
         for filename in expected_files:
@@ -86,7 +86,7 @@ class TestPlottingFunctions:
         
         _plot_rmse_vs_epoch(param_200k, param_500k, temp_output_dir)
         
-        output_file = os.path.join(temp_output_dir, 'rmse_vs_epoch_all.png')
+        output_file = os.path.join(temp_output_dir, 'rmse_vs_epoch_all.pdf')
         assert os.path.exists(output_file)
         assert os.path.getsize(output_file) > 0
     
@@ -97,7 +97,7 @@ class TestPlottingFunctions:
         
         _plot_rmse_vs_depth(param_200k, param_500k, temp_output_dir)
         
-        output_file = os.path.join(temp_output_dir, 'final_rmse_vs_depth.png')
+        output_file = os.path.join(temp_output_dir, 'final_rmse_vs_depth.pdf')
         assert os.path.exists(output_file)
         assert os.path.getsize(output_file) > 0
     
@@ -108,8 +108,8 @@ class TestPlottingFunctions:
         _plot_rmse_vs_depth([], [], temp_output_dir)
         
         # Files should still be created (even if empty)
-        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.png'))
-        assert os.path.exists(os.path.join(temp_output_dir, 'final_rmse_vs_depth.png'))
+        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.pdf'))
+        assert os.path.exists(os.path.join(temp_output_dir, 'final_rmse_vs_depth.pdf'))
     
     def test_plot_with_single_param_set(self, sample_results, temp_output_dir):
         """Test plotting with only one parameter set."""
@@ -119,8 +119,8 @@ class TestPlottingFunctions:
         _plot_rmse_vs_epoch(param_200k, [], temp_output_dir)
         _plot_rmse_vs_depth(param_200k, [], temp_output_dir)
         
-        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.png'))
-        assert os.path.exists(os.path.join(temp_output_dir, 'final_rmse_vs_depth.png'))
+        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.pdf'))
+        assert os.path.exists(os.path.join(temp_output_dir, 'final_rmse_vs_depth.pdf'))
     
     def test_plot_sorts_by_depth(self, temp_output_dir):
         """Test that results are sorted by depth."""
@@ -146,7 +146,7 @@ class TestPlottingFunctions:
         # Should not raise error (sorting happens internally)
         plot_training_summary(results, temp_output_dir)
         
-        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.png'))
+        assert os.path.exists(os.path.join(temp_output_dir, 'rmse_vs_epoch_all.pdf'))
     
     def test_plot_closes_figures(self, sample_results, temp_output_dir):
         """Test that plotting closes matplotlib figures properly."""
