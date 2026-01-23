@@ -8,3 +8,6 @@ docs/
 
 # Ignore all saving models param_* directories
 **/param_**/
+
+/DeepHalo
+**/.DS_Store

@@ -2,6 +2,10 @@
 
 import os
 import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.rcParams['font.family'] = 'Times New Roman'
+
 
 def plot_training_summary(all_results, output_dir):
     """
@@ -75,10 +79,11 @@ def _plot_rmse_vs_epoch(param_200k_results, param_500k_results, output_dir):
             ax.plot(epochs, rmse_history, label=f'500k, d={depth}', 
                     color=color, linewidth=2, alpha=0.8)
     
-    ax.set_xlabel('Epoch', fontsize=16)
-    ax.set_ylabel('RMSE (vs Empirical Frequencies)', fontsize=16)
-    ax.set_title('Training RMSE Across All Configurations', fontsize=16, fontweight='bold')
-    ax.legend(loc='upper right', fontsize=12)
+    ax.set_xlabel('Epoch', fontsize=22)
+    ax.set_ylabel('RMSE (vs Empirical Frequencies)', fontsize=22)
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.set_title('Training RMSE Across All Configurations', fontsize=20, fontweight='bold')
+    ax.legend(loc='upper right', fontsize=16)
     ax.grid(True, alpha=0.3)
     plt.tight_layout()
     
@@ -104,7 +109,7 @@ def _plot_rmse_vs_depth(param_200k_results, param_500k_results, output_dir):
         for depth, rmse in zip(depths_200k, final_rmse_200k):
             ax.annotate(f'{rmse:.4f}', xy=(depth, rmse), 
                        xytext=(0, 10), textcoords='offset points',
-                       ha='center', fontsize=12,
+                       ha='center', fontsize=16,
                        bbox=dict(boxstyle='round,pad=0.3', fc='lightblue', alpha=0.7))
     
     if param_500k_results:
@@ -117,13 +122,14 @@ def _plot_rmse_vs_depth(param_200k_results, param_500k_results, output_dir):
         for depth, rmse in zip(depths_500k, final_rmse_500k):
             ax.annotate(f'{rmse:.4f}', xy=(depth, rmse), 
                        xytext=(0, -15), textcoords='offset points',
-                       ha='center', fontsize=12,
+                       ha='center', fontsize=16,
                        bbox=dict(boxstyle='round,pad=0.3', fc='#ffe5cc', alpha=0.7))
     
-    ax.set_xlabel('Depth', fontsize=16)
-    ax.set_ylabel('Final Training RMSE', fontsize=16)
-    ax.set_title('Final Training RMSE vs Model Depth', fontsize=16, fontweight='bold')
-    ax.legend(fontsize=12, loc='best')
+    ax.set_xlabel('Depth', fontsize=22)
+    ax.set_ylabel('Final Training RMSE', fontsize=22)
+    ax.tick_params(axis='both', which='major', labelsize=20)
+    ax.set_title('Final Training RMSE vs Model Depth', fontsize=20, fontweight='bold')
+    ax.legend(fontsize=16, loc='best')
     ax.grid(True, alpha=0.3)
     
     if param_200k_results and param_500k_results:
