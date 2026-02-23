@@ -4,6 +4,14 @@ This module implements a featureless ResNet-like deep neural network model for d
 The model uses residual blocks (Quadratic or Exact) to learn complex choice patterns (including halo effects)
 from availability masks only, without requiring item features.
 
+Architecture:
+- Input linear layer: Maps availability mask to hidden dimension
+- (depth-1) residual blocks: Each block can be:
+  - Quadratic (qua): Applies quadratic transformation linear(x^2) + x
+  - Exact (exa): Applies element-wise multiplication with learned activations linear_main(x * linear_act(x0)) + x
+- Output linear layer: Projects to logits for each item
+- Softmax with availability masking: Masks unavailable items with -inf before softmax
+
 Note: This module uses 'batch_size' terminology for consistency with variable naming conventions,
 though it is equivalent to 'n_choices' used in ChoiceModel base class comments. Both refer to
 the number of choice samples (decisions) in a batch.
@@ -12,6 +20,7 @@ The model supports:
 1. Explicit initialization: Provide n_items at __init__ to build the network immediately
 2. Lazy initialization: Omit n_items and let instantiate() infer it from data during fit()
 
+The model is based on the PyTorch implementation and adapted for TensorFlow and choice-learn library.
 """
 
 import json
