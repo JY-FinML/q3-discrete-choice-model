@@ -152,7 +152,7 @@ def save_results(results, model, param_set, depth, hidden_dim, output_dir, save_
 def main():
     """Main training function."""
     # Load configuration
-    config_path = "experiments/configs/deephalo_featureless.yaml"
+    config_path = "configs/deephalo_featureless.yaml"
     with open(config_path, "r") as f:
         config = yaml.safe_load(f)
     

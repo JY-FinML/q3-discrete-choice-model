@@ -1,6 +1,5 @@
 data:
   train_path: "data/Synthetic_20-15-80_Train.csv"
-  test_path: "data/Synthetic_20-15-20_Test.csv"
   n_items: 20
   n_features: 1  # Only availability mask
   validation_split: 0.0  # If > 0, split from training data
@@ -18,7 +17,7 @@ training:
   loss_type: 'mse'
 
 output:
-  result_dir: "experiments/results/deephalo_featureless"
+  result_dir: "results/deephalo_featureless"
   save_model: true
   save_plots: true
   

@@ -28,7 +28,7 @@ def generate_one_hot_batch(probabilities: List[float], num_samples: int) -> np.n
     one_hot_batch[np.arange(num_samples), p_index] = 1
     return one_hot_batch
 
-def generate_data(offerset: List[int], max_size: int, min_size: int, num_samples_per_subset: int) -> Tuple[np.ndarray, np.ndarray]:
+def generate_data(offer_set: List[int], max_size: int, min_size: int, num_samples_per_subset: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate data (X, Y) for all subsets of offer_set of sizes between min_size and max_size.
     """
@@ -36,8 +36,8 @@ def generate_data(offerset: List[int], max_size: int, min_size: int, num_samples
     binary_subsets = []
 
     for r in range(min_size, max_size + 1):
-        for subset in itertools.combinations(offerset, r):
-            binary_subset = [1 if x in subset else 0 for x in offerset]
+        for subset in itertools.combinations(offer_set, r):
+            binary_subset = [1 if x in subset else 0 for x in offer_set]
             probability_list = generate_probability_list(binary_subset)
             probability_lists.append(probability_list)
             binary_subsets.append(binary_subset)
@@ -81,7 +81,7 @@ def main():
     print("X_train shape:", X_train.shape)
     print("Y_train shape:", Y_train.shape)
 
-    save_dataset_to_csv(X_train, Y_train, offer_set, "Synthetic_20-15-80_Train.csv")
+    save_dataset_to_csv(X_train, Y_train, offer_set, "data/Synthetic_20-15-80_Train.csv")
 
 if __name__ == "__main__":
     main()

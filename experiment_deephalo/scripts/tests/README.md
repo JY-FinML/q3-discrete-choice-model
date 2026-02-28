@@ -6,7 +6,7 @@ This test suite includes unit tests and integration tests for the training scrip
 
 ### Run all tests:
 ```bash
-cd experiments/scripts
+cd scripts
 pytest tests/ -v
 ```
 
