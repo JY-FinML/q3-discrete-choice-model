@@ -11,6 +11,7 @@ from .learning_mnl import LearningMNL
 from .nested_logit import NestedLogit
 from .reslogit import ResLogit
 from .simple_mnl import SimpleMNL
+from .sparse_demand_model import SparseDiscreteChoiceModel
 from .tastenet import TasteNet
 
 if len(tf.config.list_physical_devices("GPU")) > 0:
@@ -27,6 +28,7 @@ __all__ = [
     "DeepHaloFeatureless",
     "RUMnet",
     "SimpleMNL",
+    "SparseDiscreteChoiceModel",
     "TasteNet",
     "NestedLogit",
     "ResLogit",
