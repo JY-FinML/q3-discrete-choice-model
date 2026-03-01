@@ -1,6 +1,6 @@
 """DeepHalo Featureless Model
 
-This module implements a featureless ResNet-like deep neural network model for discrete choice prediction.
+This module implements "Deep Context-Dependent Choice Model", a featureless ResNet-like deep neural network model for discrete choice prediction.
 The model uses residual blocks (Quadratic or Exact) to learn complex choice patterns (including halo effects)
 from availability masks only, without requiring item features.
 

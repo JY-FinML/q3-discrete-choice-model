@@ -1,6 +1,6 @@
 """DeepHalo Feature-Based Model
 
-This module implements a feature-based ResNet-like deep neural network model for discrete choice prediction.
+This module implements "Deep Context-Dependent Choice Model", a feature-based ResNet-like deep neural network model for discrete choice prediction.
 The model uses residual blocks with nonlinear transformations to learn complex choice patterns (including halo effects)
 from item features. Unlike the featureless version, this model processes actual feature vectors for each item.
 

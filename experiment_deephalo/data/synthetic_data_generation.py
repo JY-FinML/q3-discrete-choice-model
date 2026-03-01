@@ -67,6 +67,7 @@ def main():
 
     num_products = 20
     train_size = 80
+    test_size = 20
     offer_set = list(range(num_products))
     max_assortment_size = 15
     min_assortment_size = 15
@@ -78,10 +79,20 @@ def main():
         num_samples_per_subset=train_size
     )
 
+    X_test, Y_test = generate_data(
+        offer_set=offer_set,
+        max_size=max_assortment_size,
+        min_size=min_assortment_size,
+        num_samples_per_subset=test_size
+    )
+
     print("X_train shape:", X_train.shape)
     print("Y_train shape:", Y_train.shape)
+    print("X_test shape:", X_test.shape)
+    print("Y_test shape:", Y_test.shape)
 
     save_dataset_to_csv(X_train, Y_train, offer_set, "data/Synthetic_20-15-80_Train.csv")
+    save_dataset_to_csv(X_test, Y_test, offer_set, "data/Synthetic_20-15-80_Test.csv")
 
 if __name__ == "__main__":
     main()
